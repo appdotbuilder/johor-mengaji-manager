@@ -1,20 +1,52 @@
+import { db } from '../db';
+import { paymentsTable } from '../db/schema';
 import { type UpdatePaymentInput, type Payment } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function updatePayment(input: UpdatePaymentInput): Promise<Payment> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is updating payment status and recording payment date.
-  // Should validate payment existence and handle status transitions properly.
-  return Promise.resolve({
-    id: input.id,
-    student_id: 0, // Placeholder - should fetch from existing record
-    study_center_id: 0, // Placeholder - should fetch from existing record
-    amount: 0, // Placeholder - should fetch from existing record
-    description: '', // Placeholder - should fetch from existing record
-    status: input.status || 'pending',
-    due_date: new Date(), // Placeholder - should fetch from existing record
-    paid_date: input.paid_date || null,
-    recorded_by: 0, // Placeholder - should fetch from existing record
-    created_at: new Date(), // Placeholder - should fetch from existing record
-    updated_at: new Date()
-  } as Payment);
-}
+export const updatePayment = async (input: UpdatePaymentInput): Promise<Payment> => {
+  try {
+    // First, check if payment exists
+    const existingPayment = await db.select()
+      .from(paymentsTable)
+      .where(eq(paymentsTable.id, input.id))
+      .execute();
+
+    if (existingPayment.length === 0) {
+      throw new Error(`Payment with id ${input.id} not found`);
+    }
+
+    // Prepare update data
+    const updateData: any = {
+      updated_at: new Date()
+    };
+
+    if (input.status !== undefined) {
+      updateData.status = input.status;
+    }
+
+    if (input.paid_date !== undefined) {
+      updateData.paid_date = input.paid_date;
+    }
+
+    // Update the payment record
+    const result = await db.update(paymentsTable)
+      .set(updateData)
+      .where(eq(paymentsTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Convert numeric fields back to numbers and dates back to Date objects
+    const payment = result[0];
+    return {
+      ...payment,
+      amount: parseFloat(payment.amount),
+      due_date: new Date(payment.due_date),
+      paid_date: payment.paid_date ? new Date(payment.paid_date) : null,
+      created_at: new Date(payment.created_at),
+      updated_at: new Date(payment.updated_at)
+    };
+  } catch (error) {
+    console.error('Payment update failed:', error);
+    throw error;
+  }
+};

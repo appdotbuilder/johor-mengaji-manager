@@ -1,28 +1,23 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import WelcomePage from './components/WelcomePage';
+import DemoPage from './components/DemoPage';
+import LoginPage from './components/LoginPage';
 import './App.css';
 
 function App() {
   return (
-    <div>
-      <div className="gradient"></div>
-      <div className="grid"></div>
-      <div className="container">
-        <h1 className="title">Under Construction</h1>
-        <p className="description">
-          Your app is under construction. It's being built right now!
-        </p>
-        <div className="dots">
-          <div className="dot"></div>
-          <div className="dot"></div>
-          <div className="dot"></div>
-        </div>
-        <footer className="footer">
-          Built with ❤️ by{" "}
-          <a href="https://app.build" target="_blank" className="footer-link">
-            app.build
-          </a>
-        </footer>
+    <Router>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
+        <Routes>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/demo" element={<DemoPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          {/* Future routes will be added here */}
+          <Route path="/dashboard" element={<div className="p-8 text-center">Dashboard - Coming Soon</div>} />
+          <Route path="/register" element={<div className="p-8 text-center">Register - Coming Soon</div>} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
 }
 

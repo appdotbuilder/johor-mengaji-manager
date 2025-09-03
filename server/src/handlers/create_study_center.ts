@@ -1,19 +1,38 @@
+import { db } from '../db';
+import { studyCentersTable, usersTable } from '../db/schema';
 import { type CreateStudyCenterInput, type StudyCenter } from '../schema';
+import { eq } from 'drizzle-orm';
 
-export async function createStudyCenter(input: CreateStudyCenterInput): Promise<StudyCenter> {
-  // This is a placeholder declaration! Real code should be implemented here.
-  // The goal of this handler is creating a new study center and persisting it in the database.
-  // Should validate that the admin_id exists and has appropriate permissions.
-  return Promise.resolve({
-    id: 0, // Placeholder ID
-    name: input.name,
-    address: input.address,
-    phone: input.phone || null,
-    email: input.email || null,
-    registration_number: input.registration_number || null,
-    admin_id: input.admin_id,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date()
-  } as StudyCenter);
-}
+export const createStudyCenter = async (input: CreateStudyCenterInput): Promise<StudyCenter> => {
+  try {
+    // Validate that the admin user exists
+    const adminUser = await db.select()
+      .from(usersTable)
+      .where(eq(usersTable.id, input.admin_id))
+      .execute();
+
+    if (adminUser.length === 0) {
+      throw new Error(`Admin user with id ${input.admin_id} not found`);
+    }
+
+    // Insert study center record
+    const result = await db.insert(studyCentersTable)
+      .values({
+        name: input.name,
+        address: input.address,
+        phone: input.phone,
+        email: input.email,
+        registration_number: input.registration_number,
+        admin_id: input.admin_id,
+        is_active: true
+      })
+      .returning()
+      .execute();
+
+    const studyCenter = result[0];
+    return studyCenter;
+  } catch (error) {
+    console.error('Study center creation failed:', error);
+    throw error;
+  }
+};
